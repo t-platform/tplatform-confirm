@@ -2,9 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  experimental: {
-    optimizeCss: true,
-  },
+
   images: {
     domains: ['localhost'],
     formats: ['image/webp', 'image/avif'],
