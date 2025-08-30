@@ -41,11 +41,45 @@ const ConfirmContent = () => {
           return;
         }
 
-        // Confirm the email with Supabase
-        const { data, error } = await supabase.auth.verifyOtp({
-          token_hash: token,
-          type: type as 'signup' | 'recovery' | 'invite' | 'magiclink',
-        });
+        // Try different token formats for Supabase confirmation
+        console.log('Token received:', token);
+        console.log('Type received:', type);
+        
+        // Method 1: Try with token_hash (for hashed tokens)
+        let data, error;
+        
+        try {
+          const result = await supabase.auth.verifyOtp({
+            token_hash: token,
+            type: type as 'signup' | 'recovery' | 'invite' | 'magiclink',
+          });
+          data = result.data;
+          error = result.error;
+        } catch (firstError) {
+          console.log('Method 1 failed, trying method 2:', firstError);
+          
+          // Method 2: Try with token (for direct tokens)
+          try {
+            const result = await supabase.auth.verifyOtp({
+              token: token,
+              type: 'email',
+            });
+            data = result.data;
+            error = result.error;
+          } catch (secondError) {
+            console.log('Method 2 failed, trying method 3:', secondError);
+            
+            // Method 3: Try manual session refresh
+            try {
+              const result = await supabase.auth.exchangeCodeForSession(token);
+              data = result.data;
+              error = result.error;
+            } catch (thirdError) {
+              console.log('All methods failed:', thirdError);
+              error = thirdError;
+            }
+          }
+        }
 
         if (error) {
           console.error('Confirmation error:', error);
